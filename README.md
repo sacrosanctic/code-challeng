@@ -1,24 +1,13 @@
-# my-project
+# Assumptions
 
-## Project setup
-```
-npm install
-```
+- the external source outputs numbers
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+# Limitations
 
-### Compiles and minifies for production
-```
-npm run build
-```
+- only 1 marker can be set per user subscription
+- marker will not trigger if sensitivity is set too high
+- marker will not trigger if starting range is within threshold
 
-### Lints and fixes files
-```
-npm run lint
-```
+# Considerations related to your solution
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+-
