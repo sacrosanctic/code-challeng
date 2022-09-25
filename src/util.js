@@ -23,7 +23,7 @@ export const printMarkerNotification = (v) =>
   `${v.user}: ${v.label} has been reached.`;
 
 //(prev: number, curr: number, {sensitivity: number, direction: asc | desc, threshold: number}): boolean
-export const meetMarkerRequirement = (
+export const meetAlertRequirement = (
   prev,
   curr,
   { sensitivity, direction, threshold }
@@ -41,3 +41,6 @@ export const notifySuccess = (msg) => {
     text: `<span class="subtitle-1">${msg}</span>`,
   });
 };
+
+export const randomNum = (min, max) =>
+  Math.floor(Math.random() * (max - min + 1) + min);

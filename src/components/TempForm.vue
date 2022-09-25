@@ -13,7 +13,7 @@
                   v-model="user"
                   label="Email"
                   required
-                  :rules="[rules.required]"
+                  :rules="[rules.required, rules.email]"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
@@ -90,7 +90,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(item, index) in userStore" :key="index">
+                    <tr v-for="(item, index) in subscribers" :key="index">
                       <td>{{ item.user }}</td>
                       <td>{{ item.label }}</td>
                       <td>{{ item.threshold }}</td>
@@ -111,31 +111,42 @@
           >
             <v-container>
               <v-row>
-                <v-col style="font-size: 24px">Manual External Source</v-col>
+                <v-col style="font-size: 24px">External Source</v-col>
               </v-row>
+
               <v-row>
-                <v-col cols="12" md="12">
+                <v-col cols="12" md="6">
                   <v-text-field
-                    v-model.number="temp"
-                    label="temperature"
+                    v-model.number="min"
+                    label="min"
+                    type="number"
+                    required
+                    :rules="[rules.required]"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model.number="max"
+                    label="max"
                     type="number"
                     required
                     :rules="[rules.required]"
                   ></v-text-field>
                 </v-col>
                 <v-col>
-                  <v-btn
-                    :disabled="!valid2"
-                    color="success"
-                    @click="submitTemperature"
-                    >Submit</v-btn
+                  <v-btn color="success" :disabled="!valid2" @click="runTest"
+                    >Simulate (20x)</v-btn
                   >
                 </v-col>
               </v-row>
               <v-row>
-                <div v-for="(item, index) in history" v-bind:key="index">
-                  {{ item }}
-                </div>
+                <v-sheet :height="200" id="temp-list" color="transparent">
+                  <vue-scroll :ops="scrollbarOptions" style="height: inherit">
+                    <div v-for="(item, index) in history" v-bind:key="index">
+                      {{ item }}
+                    </div>
+                  </vue-scroll>
+                </v-sheet>
               </v-row>
             </v-container>
           </v-form>
@@ -147,19 +158,23 @@
 <script>
 import {
   printCurrentTemperature,
-  meetMarkerRequirement,
+  meetAlertRequirement,
   printMarkerNotification,
-} from "../util.js";
+  randomNum,
+} from "@/util.js";
+import { Subscriber } from "@/models/subscriber.js";
 
 export default {
   name: "TempForm",
   data: () => ({
+    min: 95,
+    max: 105,
     valid: false,
     valid2: false,
-    user: "Scott",
+    user: "sw@scottwu.ca",
     temp: null,
-    label: "melting point",
-    threshold: 0,
+    label: "boiling point",
+    threshold: 100,
     sensitivity: 0.5,
     direction: "asc",
     items: ["asc", "desc"],
@@ -169,27 +184,45 @@ export default {
       { label: "freezing point", threshold: 0 },
       { label: "custom", threshold: null },
     ],
-    userStore: [],
+    subscribers: [],
     history: [],
     tempStore: [],
     rules: {
       required: (value) => value !== null || "Required.",
+      email: (v) => /.+@.+\..+/.test(v) || "E-mail must be valid",
+    },
+    scrollbarOptions: {
+      scrollPanel: {
+        scrollingX: false,
+      },
+      bar: {
+        onlyShowBarOnScroll: false,
+      },
+      detectResize: true,
     },
   }),
   methods: {
+    runTest() {
+      let count = 0;
+      const intervalId = setInterval(() => {
+        this.tempStore = [...this.tempStore, randomNum(this.min, this.max)];
+        count++;
+        if (count > 20) clearInterval(intervalId);
+      }, 1000);
+    },
     submitSubscription() {
       if (!this.valid) return;
       this.$refs.form.validate();
-      const obj = {
-        user: this.user,
-        label: this.label,
-        threshold: this.threshold,
-        sensitivity: this.sensitivity,
-        direction: this.direction,
-      };
-      this.userStore.push(obj);
+      const subscriber = new Subscriber(
+        this.user,
+        this.label,
+        this.threshold,
+        this.sensitivity,
+        this.direction
+      );
+      this.subscribers.push(subscriber);
       this.$refs.form.reset();
-      this.notifySuccess(`new subscription added (${obj.user})`);
+      this.notifySuccess(`new subscription added (${subscriber.user})`);
     },
     submitTemperature() {
       if (!this.valid2) return;
@@ -224,11 +257,10 @@ export default {
       const prevTemp = temperature.at(-2);
 
       this.history.unshift(printCurrentTemperature(currTemp));
-      // this.notifySuccess(printCurrentTemperature(currTemp));
 
-      if (this.userStore.length <= 0 || temperature.length < 2) return;
-      this.userStore.forEach((v) => {
-        if (meetMarkerRequirement(prevTemp, currTemp, v)) {
+      if (this.subscribers.length <= 0 || temperature.length < 2) return;
+      this.subscribers.forEach((v) => {
+        if (meetAlertRequirement(prevTemp, currTemp, v)) {
           this.history.unshift(printMarkerNotification(v));
           this.temperatureAlert(printMarkerNotification(v));
         }
