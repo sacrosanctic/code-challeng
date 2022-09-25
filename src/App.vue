@@ -6,6 +6,12 @@
 
     <v-main>
       <TempForm />
+      <notifications
+        group="notify-success"
+        :width="350"
+        position="bottom left"
+      />
+      <notifications group="notify-error" :width="350" position="bottom left" />
     </v-main>
   </v-app>
 </template>

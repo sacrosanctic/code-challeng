@@ -1,3 +1,4 @@
+//(temp: string): string
 const formatCelsius = (val) => `${val}°C`;
 
 //([ prev:number , curr:number ]): number
@@ -18,7 +19,8 @@ export const printCurrentTemperature = (temp) =>
   `the current temperature is ${formatCelsius(temp)}`;
 
 //(label: string): string
-export const printMarkerNotification = (label) => `${label} has been reached.`;
+export const printMarkerNotification = (v) =>
+  `${v.user}: ${v.label} has been reached.`;
 
 //(prev: number, curr: number, {sensitivity: number, direction: asc | desc, threshold: number}): boolean
 export const meetMarkerRequirement = (
@@ -29,3 +31,13 @@ export const meetMarkerRequirement = (
   getMagnitude([prev, curr]) > sensitivity &&
   getDirection([prev, curr]) === direction &&
   passedThreshold([prev, curr], threshold, direction);
+
+export const notifySuccess = (msg) => {
+  this.$notify({
+    group: "notify-success",
+    title: "<h1>Success</h1>",
+    type: "success",
+    duration: 5000,
+    text: `<span class="subtitle-1">${msg}</span>`,
+  });
+};
